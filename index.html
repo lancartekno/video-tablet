@@ -4,60 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cafe Ngopi Heula</title>
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
 </head>
 <body>
 
     <h1>Cafe Ngopi Heula</h1>
 
     <!-- Video Element with Loop Attribute and JS Fallback -->
-    <video id="kopiVideo" width="600" controls>
-        <source src="kopi_ipad2.mp4" type="video/mp4">
+    <video
+      id="kopiVideo"
+      class="video-js vjs-default-skin"
+      width="600"
+      controls
+      preload="auto"
+      data-setup='{}'>
+        <source src="kopi_ipad2.mp4" type="video/mp4" />
         Browser Anda tidak mendukung elemen video.
     </video>
     <button id="playBtn" style="display:none;">Play</button>
     <button id="pauseBtn" style="display:none;">Pause</button>
 
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <script>
-    var video = document.getElementById('kopiVideo');
-    var playBtn = document.getElementById('playBtn');
-    var pauseBtn = document.getElementById('pauseBtn');
+    document.addEventListener('DOMContentLoaded', function() {
+        var video = document.getElementById('kopiVideo');
+        var playBtn = document.getElementById('playBtn');
+        var pauseBtn = document.getElementById('pauseBtn');
+        var isVideoJsLoaded = typeof videojs !== "undefined";
 
-    // Fallback loop: interval cek status
-    function fallbackLoop() {
-        setInterval(function() {
-            if (video.ended || video.currentTime === video.duration) {
-                video.currentTime = 0;
-                video.play();
-            }
-        }, 500);
-    }
-
-    // Deteksi jika kontrol tidak muncul (Safari lawas)
-    video.addEventListener('loadedmetadata', function() {
-        if (!video.controls) {
+        if (isVideoJsLoaded) {
+            // Inisialisasi Video.js
+            var player = videojs('kopiVideo');
+            // Loop fallback untuk browser yang tidak support event ended
+            player.on('ended', function() {
+                player.currentTime(0);
+                player.play();
+            });
+        } else {
+            // Fallback manual untuk browser lawas
             playBtn.style.display = 'inline';
             pauseBtn.style.display = 'inline';
+            playBtn.onclick = function() { video.play(); }
+            pauseBtn.onclick = function() { video.pause(); }
+            setInterval(function() {
+                if (video.ended || video.currentTime === video.duration) {
+                    video.currentTime = 0;
+                    video.play();
+                }
+            }, 500);
         }
     });
-
-    // Tombol manual
-    playBtn.onclick = function() { video.play(); }
-    pauseBtn.onclick = function() { video.pause(); }
-
-    // Coba pakai event ended, jika gagal pakai interval
-    try {
-        video.addEventListener('ended', function() {
-            this.currentTime = 0;
-            this.play();
-        }, false);
-    } catch(e) {
-        fallbackLoop();
-    }
-
-    // Untuk Safari lawas yang tidak support event ended
-    if (!('onended' in video)) {
-        fallbackLoop();
-    }
     </script>
 
 </body>
