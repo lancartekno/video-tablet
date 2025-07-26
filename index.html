@@ -30,29 +30,74 @@
         var video = document.getElementById('kopiVideo');
         var playBtn = document.getElementById('playBtn');
         var pauseBtn = document.getElementById('pauseBtn');
-        var isVideoJsLoaded = typeof videojs !== "undefined";
-
-        if (isVideoJsLoaded) {
-            // Inisialisasi Video.js
-            var player = videojs('kopiVideo');
-            // Loop fallback untuk browser yang tidak support event ended
-            player.on('ended', function() {
-                player.currentTime(0);
-                player.play();
-            });
-        } else {
+        
+        // Cek apakah Video.js tersedia dengan timeout
+        var videoJsCheck = setTimeout(function() {
+            if (typeof videojs !== "undefined") {
+                try {
+                    // Inisialisasi Video.js
+                    var player = videojs('kopiVideo', {
+                        controls: true,
+                        autoplay: false,
+                        preload: 'auto'
+                    });
+                    
+                    // Loop fallback untuk browser yang tidak support event ended
+                    player.on('ended', function() {
+                        player.currentTime(0);
+                        player.play();
+                    });
+                    
+                    console.log('Video.js berhasil diinisialisasi');
+                } catch(e) {
+                    console.log('Video.js gagal diinisialisasi:', e);
+                    showManualControls();
+                }
+            } else {
+                console.log('Video.js tidak tersedia, menggunakan fallback manual');
+                showManualControls();
+            }
+        }, 1000); // Tunggu 1 detik untuk memastikan Video.js dimuat
+        
+        function showManualControls() {
             // Fallback manual untuk browser lawas
             playBtn.style.display = 'inline';
             pauseBtn.style.display = 'inline';
-            playBtn.onclick = function() { video.play(); }
-            pauseBtn.onclick = function() { video.pause(); }
-            setInterval(function() {
-                if (video.ended || video.currentTime === video.duration) {
-                    video.currentTime = 0;
-                    video.play();
+            
+            playBtn.onclick = function() { 
+                try {
+                    video.play(); 
+                } catch(e) {
+                    console.log('Gagal play video:', e);
                 }
-            }, 500);
+            }
+            
+            pauseBtn.onclick = function() { 
+                try {
+                    video.pause(); 
+                } catch(e) {
+                    console.log('Gagal pause video:', e);
+                }
+            }
+            
+            // Loop fallback dengan interval
+            setInterval(function() {
+                try {
+                    if (video.ended || (video.currentTime > 0 && video.currentTime >= video.duration - 0.1)) {
+                        video.currentTime = 0;
+                        video.play();
+                    }
+                } catch(e) {
+                    console.log('Error dalam loop fallback:', e);
+                }
+            }, 1000);
         }
+        
+        // Tambahan: cek apakah video bisa diputar
+        video.addEventListener('error', function(e) {
+            console.log('Error loading video:', e);
+            showManualControls();
+        });
     });
     </script>
 
