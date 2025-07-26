@@ -10,18 +10,54 @@
     <h1>Cafe Ngopi Heula</h1>
 
     <!-- Video Element with Loop Attribute and JS Fallback -->
-    <video id="kopiVideo" width="600" controls loop>
+    <video id="kopiVideo" width="600" controls>
         <source src="kopi_ipad2.mp4" type="video/mp4">
         Browser Anda tidak mendukung elemen video.
     </video>
+    <button id="playBtn" style="display:none;">Play</button>
+    <button id="pauseBtn" style="display:none;">Pause</button>
 
     <script>
-    // Fallback loop untuk browser lawas (iPad 2/Safari lama)
     var video = document.getElementById('kopiVideo');
-    video.addEventListener('ended', function() {
-        this.currentTime = 0;
-        this.play();
-    }, false);
+    var playBtn = document.getElementById('playBtn');
+    var pauseBtn = document.getElementById('pauseBtn');
+
+    // Fallback loop: interval cek status
+    function fallbackLoop() {
+        setInterval(function() {
+            if (video.ended || video.currentTime === video.duration) {
+                video.currentTime = 0;
+                video.play();
+            }
+        }, 500);
+    }
+
+    // Deteksi jika kontrol tidak muncul (Safari lawas)
+    video.addEventListener('loadedmetadata', function() {
+        if (!video.controls) {
+            playBtn.style.display = 'inline';
+            pauseBtn.style.display = 'inline';
+        }
+    });
+
+    // Tombol manual
+    playBtn.onclick = function() { video.play(); }
+    pauseBtn.onclick = function() { video.pause(); }
+
+    // Coba pakai event ended, jika gagal pakai interval
+    try {
+        video.addEventListener('ended', function() {
+            this.currentTime = 0;
+            this.play();
+        }, false);
+    } catch(e) {
+        fallbackLoop();
+    }
+
+    // Untuk Safari lawas yang tidak support event ended
+    if (!('onended' in video)) {
+        fallbackLoop();
+    }
     </script>
 
 </body>
