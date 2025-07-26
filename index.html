@@ -9,11 +9,20 @@
 
     <h1>Cafe Ngopi Heula</h1>
 
-    <!-- Video Element with Loop Attribute -->
-    <video width="600" controls loop>
+    <!-- Video Element with Loop Attribute and JS Fallback -->
+    <video id="kopiVideo" width="600" controls loop muted playsinline poster="kopi.gif">
         <source src="kopi.mp4" type="video/mp4">
         Browser Anda tidak mendukung elemen video.
     </video>
+
+    <script>
+    // Fallback loop untuk browser lawas (iPad 2/Safari lama)
+    var video = document.getElementById('kopiVideo');
+    video.addEventListener('ended', function() {
+        this.currentTime = 0;
+        this.play();
+    }, false);
+    </script>
 
 </body>
 </html>
