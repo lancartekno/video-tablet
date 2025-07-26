@@ -4,100 +4,112 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cafe Ngopi Heula</title>
-    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
 </head>
 <body>
 
     <h1>Cafe Ngopi Heula</h1>
 
     <!-- Video Element with Loop Attribute and JS Fallback -->
-    <video
-      id="kopiVideo"
-      class="video-js vjs-default-skin"
-      width="600"
-      controls
-      preload="auto"
-      data-setup='{}'>
-        <source src="kopi_ipad2.mp4" type="video/mp4" />
+    <video id="kopiVideo" width="600" controls loop>
+        <source src="kopi_ipad2.mp4" type="video/mp4">
         Browser Anda tidak mendukung elemen video.
     </video>
-    <button id="playBtn" style="display:none;">Play</button>
-    <button id="pauseBtn" style="display:none;">Pause</button>
+    
+    <!-- Manual controls untuk browser lawas -->
+    <div id="manualControls" style="display:none; margin-top: 10px;">
+        <button id="playBtn">▶ Play</button>
+        <button id="pauseBtn">⏸ Pause</button>
+        <button id="restartBtn">⏮ Restart</button>
+    </div>
 
-    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         var video = document.getElementById('kopiVideo');
+        var manualControls = document.getElementById('manualControls');
         var playBtn = document.getElementById('playBtn');
         var pauseBtn = document.getElementById('pauseBtn');
+        var restartBtn = document.getElementById('restartBtn');
         
-        // Cek apakah Video.js tersedia dengan timeout
-        var videoJsCheck = setTimeout(function() {
-            if (typeof videojs !== "undefined") {
-                try {
-                    // Inisialisasi Video.js
-                    var player = videojs('kopiVideo', {
-                        controls: true,
-                        autoplay: false,
-                        preload: 'auto'
-                    });
-                    
-                    // Loop fallback untuk browser yang tidak support event ended
-                    player.on('ended', function() {
-                        player.currentTime(0);
-                        player.play();
-                    });
-                    
-                    console.log('Video.js berhasil diinisialisasi');
-                } catch(e) {
-                    console.log('Video.js gagal diinisialisasi:', e);
-                    showManualControls();
-                }
-            } else {
-                console.log('Video.js tidak tersedia, menggunakan fallback manual');
+        // Deteksi browser lawas atau masalah dengan video controls
+        var isOldBrowser = false;
+        
+        // Cek apakah video controls berfungsi
+        video.addEventListener('loadedmetadata', function() {
+            // Jika video tidak memiliki controls yang proper, tampilkan manual controls
+            if (!video.controls || video.controls === false) {
+                isOldBrowser = true;
                 showManualControls();
             }
-        }, 1000); // Tunggu 1 detik untuk memastikan Video.js dimuat
+        });
         
-        function showManualControls() {
-            // Fallback manual untuk browser lawas
-            playBtn.style.display = 'inline';
-            pauseBtn.style.display = 'inline';
-            
-            playBtn.onclick = function() { 
-                try {
-                    video.play(); 
-                } catch(e) {
-                    console.log('Gagal play video:', e);
-                }
-            }
-            
-            pauseBtn.onclick = function() { 
-                try {
-                    video.pause(); 
-                } catch(e) {
-                    console.log('Gagal pause video:', e);
-                }
-            }
-            
-            // Loop fallback dengan interval
-            setInterval(function() {
-                try {
-                    if (video.ended || (video.currentTime > 0 && video.currentTime >= video.duration - 0.1)) {
-                        video.currentTime = 0;
-                        video.play();
-                    }
-                } catch(e) {
-                    console.log('Error dalam loop fallback:', e);
-                }
-            }, 1000);
-        }
-        
-        // Tambahan: cek apakah video bisa diputar
+        // Cek error loading video
         video.addEventListener('error', function(e) {
             console.log('Error loading video:', e);
+            isOldBrowser = true;
             showManualControls();
         });
+        
+        // Cek apakah video bisa diputar
+        video.addEventListener('canplay', function() {
+            // Test play untuk cek apakah browser support video
+            video.pause(); // Pastikan video tidak autoplay
+        });
+        
+        function showManualControls() {
+            manualControls.style.display = 'block';
+            
+            // Manual play button
+            playBtn.onclick = function() {
+                try {
+                    video.play();
+                    console.log('Video played manually');
+                } catch(e) {
+                    console.log('Failed to play video:', e);
+                }
+            };
+            
+            // Manual pause button
+            pauseBtn.onclick = function() {
+                try {
+                    video.pause();
+                    console.log('Video paused manually');
+                } catch(e) {
+                    console.log('Failed to pause video:', e);
+                }
+            };
+            
+            // Manual restart button
+            restartBtn.onclick = function() {
+                try {
+                    video.currentTime = 0;
+                    video.play();
+                    console.log('Video restarted manually');
+                } catch(e) {
+                    console.log('Failed to restart video:', e);
+                }
+            };
+            
+            // Auto loop untuk browser yang tidak support loop attribute
+            setInterval(function() {
+                try {
+                    if (video.ended || (video.currentTime > 0 && video.currentTime >= video.duration - 0.5)) {
+                        video.currentTime = 0;
+                        video.play();
+                        console.log('Auto loop triggered');
+                    }
+                } catch(e) {
+                    console.log('Error in auto loop:', e);
+                }
+            }, 2000);
+        }
+        
+        // Fallback: jika setelah 3 detik video belum bisa diputar, tampilkan manual controls
+        setTimeout(function() {
+            if (video.readyState === 0) { // HAVE_NOTHING
+                console.log('Video not loaded, showing manual controls');
+                showManualControls();
+            }
+        }, 3000);
     });
     </script>
 
